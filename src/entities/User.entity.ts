@@ -1,0 +1,34 @@
+import { UserGender } from 'src/modules/user/user.types';
+import {
+  BeforeInsert,
+  BeforeUpdate,
+  Column,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import * as bcrypt from 'bcrypt';
+
+@Entity('users')
+export class UserEntity {
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Column({ unique: true })
+  username: string;
+
+  @Column()
+  password: string;
+
+  @Column({ nullable: true })
+  fullName: string;
+
+  @Column({ type: 'enum', enum: UserGender, default: UserGender.MALE })
+  gender: UserGender;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  async beforeSave() {
+    if (!this.password) return;
+    this.password = await bcrypt.hash(this.password, 10);
+  }
+}
