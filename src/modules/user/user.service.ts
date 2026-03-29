@@ -12,4 +12,8 @@ export class UserService {
   list() {
     return this.userRepo.find();
   }
+
+  findUserById(id: number) {
+    return this.userRepo.findOne({ where: { id } });
+  }
 }

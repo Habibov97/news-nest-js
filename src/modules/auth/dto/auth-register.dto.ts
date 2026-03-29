@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsEmail,
+  IsAlphanumeric,
   IsEnum,
   IsOptional,
   IsString,
@@ -14,6 +14,7 @@ export class AuthRegisterDto {
   @Type()
   @IsString()
   @Length(5, 30)
+  @IsAlphanumeric()
   @ApiProperty({ default: 'Johnnyyyyy' })
   username: string;
 
