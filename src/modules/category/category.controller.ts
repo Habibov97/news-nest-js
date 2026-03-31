@@ -34,7 +34,7 @@ export class CategoryController {
   @Patch(':id')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  update(@Param('id') id: string, @Body() body: UpdateCategoryDto) {
+  update(@Param('id') id: number, @Body() body: UpdateCategoryDto) {
     const result = this.categoryService.update(id, body);
     return result;
   }
@@ -42,7 +42,7 @@ export class CategoryController {
   @Delete(':id')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: number) {
     const result = this.categoryService.remove(id);
     return result;
   }

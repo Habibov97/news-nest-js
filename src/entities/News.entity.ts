@@ -6,9 +6,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CategoryEntity } from './Category.entity';
 
 @Entity('news')
 export class NewsEntity extends BaseEntity {
@@ -35,6 +38,12 @@ export class NewsEntity extends BaseEntity {
 
   @Column({ default: 0 })
   dislike: number;
+
+  @ManyToOne(() => CategoryEntity, (item: CategoryEntity) => item.news, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'categoryId' })
+  category: CategoryEntity;
 
   @CreateDateColumn()
   createdAt: Date;

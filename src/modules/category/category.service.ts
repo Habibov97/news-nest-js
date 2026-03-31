@@ -13,6 +13,10 @@ export class CategoryService {
     private categoryRepo: Repository<CategoryEntity>,
   ) {}
 
+  findById(categoryId: number) {
+    return this.categoryRepo.findOne({ where: { id: categoryId } });
+  }
+
   list() {
     return this.categoryRepo.find();
   }
@@ -24,13 +28,13 @@ export class CategoryService {
     return newCategory;
   }
 
-  async update(id: string, params: UpdateCategoryDto) {
+  async update(id: number, params: UpdateCategoryDto) {
     if (!params.slug && params.name) {
       params.slug = slugify(params.name, { lower: true, strict: true });
     }
 
     const category = await this.categoryRepo.preload({
-      id: Number(id),
+      id,
       ...params,
     });
 
@@ -43,9 +47,9 @@ export class CategoryService {
     };
   }
 
-  async remove(id: string) {
+  async remove(id: number) {
     const category = await this.categoryRepo.findOne({
-      where: { id: Number(id) },
+      where: { id },
     });
 
     if (!category) throw new NotFoundException('Category not found!');
