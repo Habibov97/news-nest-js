@@ -4,9 +4,13 @@ import { NewsService } from './news.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { NewsEntity } from 'src/entities/News.entity';
 import { CategoryModule } from '../category/category.module';
+import { NewsActionHistoryEntity } from 'src/entities/NewsActionHistory.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([NewsEntity]), CategoryModule],
+  imports: [
+    TypeOrmModule.forFeature([NewsEntity, NewsActionHistoryEntity]),
+    CategoryModule,
+  ],
   controllers: [NewsController],
   providers: [NewsService],
 })

@@ -6,12 +6,13 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { CategoryEntity } from './Category.entity';
+import { NewsActionHistoryEntity } from './NewsActionHistory.entity';
 
 @Entity('news')
 export class NewsEntity extends BaseEntity {
@@ -42,14 +43,22 @@ export class NewsEntity extends BaseEntity {
   @ManyToOne(() => CategoryEntity, (item: CategoryEntity) => item.news, {
     onDelete: 'CASCADE',
   })
-  @JoinColumn({ name: 'categoryId' })
   category: CategoryEntity;
+
+  @Column()
+  categoryId: number;
 
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @OneToMany(
+    () => NewsActionHistoryEntity,
+    (item: NewsActionHistoryEntity) => item.news,
+  )
+  actionHistory: NewsActionHistoryEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()

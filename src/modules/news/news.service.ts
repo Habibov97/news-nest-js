@@ -1,23 +1,35 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NewsEntity } from 'src/entities/News.entity';
-import { Repository } from 'typeorm';
+import { FindOptionsWhere, Repository } from 'typeorm';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { CategoryService } from '../category/category.service';
 import slugify from 'slugify';
 import { UpdateNewsDto } from './dto/update-news.dto';
+import { NewsListDto } from './dto/list-news.dto';
+import { NewsActionType } from './news-types';
+import { NewsActionHistoryEntity } from 'src/entities/NewsActionHistory.entity';
 
 @Injectable()
 export class NewsService {
   constructor(
     private categoryService: CategoryService,
     @InjectRepository(NewsEntity) private newsRepo: Repository<NewsEntity>,
+    @InjectRepository(NewsActionHistoryEntity)
+    private newsActionRepo: Repository<NewsActionHistoryEntity>,
   ) {}
-  async list() {
+  async list(params: NewsListDto) {
+    const where: FindOptionsWhere<NewsEntity> = {};
+
+    if (params.category) {
+      where.categoryId = params.category;
+    }
+
     const news = await this.newsRepo.find({
+      where,
       relations: ['category'],
+      order: { createdAt: 'DESC' },
     });
-    console.log(news);
 
     return news;
   }
@@ -26,10 +38,51 @@ export class NewsService {
     const category = await this.categoryService.findById(params.categoryId);
     if (!category) throw new NotFoundException('Category not found!');
 
-    const newsItem = this.newsRepo.create({ ...params, category });
+    const newsItem = this.newsRepo.create(params);
     await newsItem.save();
 
     return newsItem;
+  }
+
+  async action(newsId: number, type: NewsActionType, userId: number) {
+    const news = await this.newsRepo.findOne({ where: { id: newsId } });
+
+    if (!news) throw new NotFoundException('News not found!');
+
+    const userAction = await this.newsActionRepo.findOne({
+      where: {
+        newsId: newsId,
+        userId: userId,
+        actionType: type,
+      },
+    });
+
+    let increaseValue = 1;
+
+    if (userAction && type !== NewsActionType.VIEW) {
+      await userAction.remove();
+      increaseValue = -1;
+    } else {
+      await this.newsActionRepo.save({ newsId, userId, actionType: type });
+    }
+
+    switch (type) {
+      case NewsActionType.LIKE:
+        await this.newsRepo.increment({ id: newsId }, 'like', increaseValue);
+        break;
+      case NewsActionType.DISLIKE:
+        await this.newsRepo.increment({ id: newsId }, 'dislike', increaseValue);
+        break;
+      case NewsActionType.VIEW:
+        await this.newsRepo.increment({ id: newsId }, 'view', increaseValue);
+        break;
+      default:
+        throw new NotFoundException('Action is invalid!');
+    }
+
+    return {
+      message: increaseValue === 1 ? 'Action added' : 'Action removed',
+    };
   }
 
   async update(id: number, params: UpdateNewsDto) {
@@ -39,22 +92,18 @@ export class NewsService {
 
     const news = await this.newsRepo.findOne({
       where: { id },
-      relations: ['category'],
     });
 
     if (!news)
       throw new NotFoundException(`News is not exists in provided ${id}`);
 
-    const { categoryId, ...rest } = params;
-
-    if (params.categoryId && news.category?.id != params.categoryId) {
+    if (params.categoryId && news.categoryId != params.categoryId) {
       const category = await this.categoryService.findById(params.categoryId);
       if (!category) throw new NotFoundException('Category not found!');
-      news.category = category;
     }
 
-    Object.assign(news, rest);
-    await news.save();
+    await this.newsRepo.update({ id }, params);
+
     return {
       message: 'News updated successfully',
     };
