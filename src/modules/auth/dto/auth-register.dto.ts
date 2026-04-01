@@ -8,7 +8,7 @@ import {
   Length,
   MinLength,
 } from 'class-validator';
-import { UserGender } from 'src/modules/user/user.types';
+import { UserGender, UserRole } from 'src/modules/user/user.types';
 
 export class AuthRegisterDto {
   @Type()
@@ -34,4 +34,9 @@ export class AuthRegisterDto {
   @IsOptional()
   @ApiProperty({ nullable: true, default: 'John Doe' })
   fullName: string;
+
+  @Type()
+  @IsEnum(UserRole)
+  @ApiProperty({ default: UserRole.GUEST })
+  role: UserRole;
 }

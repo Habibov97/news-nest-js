@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { NewsEntity } from 'src/entities/News.entity';
-import { FindOptionsWhere, Repository } from 'typeorm';
+import { FindOptionsOrder, FindOptionsWhere, Repository } from 'typeorm';
 import { CreateNewsDto } from './dto/create-news.dto';
 import { CategoryService } from '../category/category.service';
 import slugify from 'slugify';
@@ -19,19 +19,39 @@ export class NewsService {
     private newsActionRepo: Repository<NewsActionHistoryEntity>,
   ) {}
   async list(params: NewsListDto) {
-    const where: FindOptionsWhere<NewsEntity> = {};
+    let where: FindOptionsWhere<NewsEntity> = {};
+    let order: FindOptionsOrder<NewsEntity> = {};
+
+    if (params.popular) {
+      order = {
+        views: 'DESC',
+        createdAt: 'DESC',
+      };
+    } else if (params.top) {
+      order = {
+        like: 'DESC',
+        createdAt: 'DESC',
+      };
+    } else {
+      order = { createdAt: 'DESC' };
+    }
 
     if (params.category) {
       where.categoryId = params.category;
     }
 
-    const news = await this.newsRepo.find({
+    const [news, total] = await this.newsRepo.findAndCount({
       where,
       relations: ['category'],
-      order: { createdAt: 'DESC' },
+      order,
+      take: params.limit,
+      skip: (params.page - 1) * params.limit,
     });
 
-    return news;
+    return {
+      news,
+      total,
+    };
   }
 
   async create(params: CreateNewsDto) {

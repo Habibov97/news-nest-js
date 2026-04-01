@@ -18,6 +18,8 @@ import { UpdateNewsDto } from './dto/update-news.dto';
 import { NewsListDto } from './dto/list-news.dto';
 import { NewsActionType } from './news-types';
 import type { AuthorizedUser } from '../auth/auth.types';
+import { Roles } from 'src/shared/decorator/role.decorator';
+import { UserRole } from '../user/user.types';
 
 @Controller('news')
 export class NewsController {
@@ -30,14 +32,15 @@ export class NewsController {
   }
 
   @Post()
-  @UseGuards(AuthGuard)
   @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   create(@Body() body: CreateNewsDto) {
     return this.newsService.create(body);
   }
 
   @Post(':id/action/:type')
   @ApiBearerAuth()
+  @Roles(UserRole.GUEST)
   @UseGuards(AuthGuard)
   action(
     @Param('id') id: number,
@@ -48,8 +51,8 @@ export class NewsController {
   }
 
   @Patch(':id')
-  @UseGuards(AuthGuard)
   @ApiBearerAuth()
+  @UseGuards(AuthGuard)
   update(@Param('id') id: number, @Body() body: UpdateNewsDto) {
     const result = this.newsService.update(id, body);
 

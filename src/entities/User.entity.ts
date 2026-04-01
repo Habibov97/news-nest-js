@@ -1,5 +1,6 @@
-import { UserGender } from 'src/modules/user/user.types';
+import { UserGender, UserRole } from 'src/modules/user/user.types';
 import {
+  BaseEntity,
   BeforeInsert,
   BeforeUpdate,
   Column,
@@ -9,7 +10,7 @@ import {
 import * as bcrypt from 'bcrypt';
 
 @Entity('users')
-export class UserEntity {
+export class UserEntity extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -24,6 +25,9 @@ export class UserEntity {
 
   @Column({ type: 'enum', enum: UserGender, default: UserGender.MALE })
   gender: UserGender;
+
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.GUEST })
+  role: UserRole;
 
   @BeforeInsert()
   @BeforeUpdate()
