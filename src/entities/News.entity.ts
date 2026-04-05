@@ -13,6 +13,7 @@ import {
 } from 'typeorm';
 import { CategoryEntity } from './Category.entity';
 import { NewsActionHistoryEntity } from './NewsActionHistory.entity';
+import { CommentEntity } from './Comment.entity';
 
 @Entity('news')
 export class NewsEntity extends BaseEntity {
@@ -59,6 +60,9 @@ export class NewsEntity extends BaseEntity {
     (item: NewsActionHistoryEntity) => item.news,
   )
   actionHistory: NewsActionHistoryEntity[];
+
+  @OneToMany(() => CommentEntity, (item: CommentEntity) => item.news)
+  comments: CommentEntity[];
 
   @BeforeInsert()
   @BeforeUpdate()

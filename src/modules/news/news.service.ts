@@ -42,6 +42,21 @@ export class NewsService {
 
     const [news, total] = await this.newsRepo.findAndCount({
       where,
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        thumbnail: true,
+        createdAt: true,
+        like: true,
+        dislike: true,
+        views: true,
+        category: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+      },
       relations: ['category'],
       order,
       take: params.limit,
@@ -52,6 +67,46 @@ export class NewsService {
       news,
       total,
     };
+  }
+
+  async newsItem(id: number) {
+    const newsItem = this.newsRepo.findOne({
+      where: { id },
+      select: {
+        id: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        thumbnail: true,
+        slug: true,
+        like: true,
+        dislike: true,
+        views: true,
+        category: {
+          id: true,
+          name: true,
+          slug: true,
+        },
+        comments: {
+          id: true,
+          content: true,
+          createdAt: true,
+          user: {
+            id: true,
+            username: true,
+            fullName: true,
+          },
+        },
+      },
+      relations: ['category', 'comments', 'comments.user'],
+      order: {
+        comments: {
+          createdAt: 'DESC',
+        },
+      },
+    });
+
+    return newsItem;
   }
 
   async create(params: CreateNewsDto) {

@@ -44,6 +44,7 @@ export class UserService {
       user: {
         ...user,
         password: undefined,
+        gender: undefined,
       },
       token,
     };

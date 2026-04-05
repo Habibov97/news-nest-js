@@ -9,6 +9,7 @@ import {
   Query,
   Req,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { NewsService } from './news.service';
 import { AuthGuard } from 'src/guards/auth.guards';
@@ -17,18 +18,25 @@ import { CreateNewsDto } from './dto/create-news.dto';
 import { UpdateNewsDto } from './dto/update-news.dto';
 import { NewsListDto } from './dto/list-news.dto';
 import { NewsActionType } from './news-types';
-import type { AuthorizedUser } from '../auth/auth.types';
+import type { AuthorizedRequest } from '../auth/auth.types';
 import { Roles } from 'src/shared/decorator/role.decorator';
 import { UserRole } from '../user/user.types';
+import { LogRequestTimeInterceptor } from 'src/interceptors/log-request-time.interceptor';
 
 @Controller('news')
 export class NewsController {
   constructor(private newsService: NewsService) {}
 
   @Get()
+  @UseInterceptors(LogRequestTimeInterceptor)
   list(@Query() query: NewsListDto) {
     const result = this.newsService.list(query);
     return result;
+  }
+
+  @Get(':id')
+  newsItem(@Param('id') id: number) {
+    return this.newsService.newsItem(id);
   }
 
   @Post()
@@ -45,7 +53,7 @@ export class NewsController {
   action(
     @Param('id') id: number,
     @Param('type') type: NewsActionType,
-    @Req() req: AuthorizedUser,
+    @Req() req: AuthorizedRequest,
   ) {
     return this.newsService.action(id, type, req.user.id);
   }
