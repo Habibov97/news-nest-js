@@ -3,6 +3,7 @@ import {
   Controller,
   Post,
   UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -10,7 +11,7 @@ import { AuthGuard } from 'src/guards/auth.guards';
 import { Roles } from 'src/shared/decorator/role.decorator';
 import { UserRole } from '../user/user.types';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import { extname, join } from 'path';
 import * as crypto from 'crypto';
 import {
@@ -40,7 +41,7 @@ export class UploadController {
         filename(req, file, cb) {
           const ext = extname(file.originalname);
           const fileName = crypto.randomBytes(36).toString('hex');
-          cb(null, `${fileName}${ext}`);
+          cb(null, `${fileName}.${ext}`);
         },
       }),
       fileFilter: (req, file, cb) => {
@@ -69,5 +70,32 @@ export class UploadController {
   }
 
   @Post('cloud')
-  uploadFileCloud() {}
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    type: FileUploadDto,
+  })
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      fileFilter: (req, file, cb) => {
+        const ext = extname(file.originalname).toLowerCase();
+        const mimeType = file.mimetype;
+
+        if (
+          !ALLOWED_IMAGE_EXTENSIONS.includes(ext) ||
+          !ALLOWED_IMAGE_MIME_TYPES.includes(mimeType)
+        ) {
+          return cb(new BadRequestException('Invalid file type'), false);
+        }
+
+        cb(null, true);
+      },
+      limits: {
+        fileSize: 5e6,
+      },
+    }),
+  )
+  uploadToCloud(@UploadedFile('file') file: Express.Multer.File) {
+    return this.uploadService.uploadToCloud(file);
+  }
 }
